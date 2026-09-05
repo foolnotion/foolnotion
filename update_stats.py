@@ -9,10 +9,16 @@ TOKEN = os.environ["GH_TOKEN"]
 README_PATH = os.environ.get("README_PATH", "README.md")
 TOP_N = int(os.environ.get("TOP_N_LANGS", "6"))
 
+# Repos owned by other orgs where USERNAME is the primary developer but which
+# ownerAffiliations: OWNER won't pick up. "owner/name" format.
+EXTRA_REPOS = [
+    r for r in os.environ.get("EXTRA_REPOS", "").split(",") if r.strip()
+]
+
 API = "https://api.github.com/graphql"
 HEADERS = {"Authorization": f"bearer {TOKEN}"}
 
-QUERY = """
+OWNED_QUERY = """
 query($login: String!, $after: String) {
   user(login: $login) {
     repositories(first: 100, after: $after, ownerAffiliations: OWNER, isFork: false, privacy: PUBLIC) {
@@ -28,27 +34,43 @@ query($login: String!, $after: String) {
 }
 """
 
+EXTRA_QUERY = """
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    stargazerCount
+    languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+      edges { size node { name color } }
+    }
+  }
+}
+"""
+
+
+def graphql(query, variables):
+    resp = requests.post(API, json={"query": query, "variables": variables}, headers=HEADERS, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    if "errors" in data:
+        print(data["errors"], file=sys.stderr)
+        sys.exit(1)
+    return data["data"]
+
 
 def fetch_all_repos():
     repos = []
     after = None
     while True:
-        resp = requests.post(
-            API,
-            json={"query": QUERY, "variables": {"login": USERNAME, "after": after}},
-            headers=HEADERS,
-            timeout=30,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        if "errors" in data:
-            print(data["errors"], file=sys.stderr)
-            sys.exit(1)
-        block = data["data"]["user"]["repositories"]
+        block = graphql(OWNED_QUERY, {"login": USERNAME, "after": after})["user"]["repositories"]
         repos.extend(block["nodes"])
         if not block["pageInfo"]["hasNextPage"]:
             break
         after = block["pageInfo"]["endCursor"]
+
+    for full_name in EXTRA_REPOS:
+        owner, name = full_name.strip().split("/", 1)
+        repo = graphql(EXTRA_QUERY, {"owner": owner, "name": name})["repository"]
+        repos.append(repo)
+
     return repos
 
 

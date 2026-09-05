@@ -25,6 +25,7 @@ jobs:
         env:
           GH_USERNAME: ${{ github.repository_owner }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXTRA_REPOS: "heal-research/operon,heal-research/pyoperon,heal-research/vstat,heal-research/pappus,heal-research/operon-archive"
         run: python update_stats.py
 
       - name: Commit changes
