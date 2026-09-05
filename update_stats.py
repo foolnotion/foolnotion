@@ -2,6 +2,8 @@
 import os
 import re
 import sys
+from datetime import datetime, timedelta, timezone
+
 import requests
 
 USERNAME = os.environ["GH_USERNAME"]
@@ -37,6 +39,25 @@ query($login: String!, $after: String) {
         languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
           edges { size node { name color } }
         }
+      }
+    }
+  }
+}
+"""
+
+CREATED_AT_QUERY = """
+query($login: String!) {
+  user(login: $login) { createdAt }
+}
+"""
+
+CONTRIBUTIONS_QUERY = """
+query($login: String!, $from: DateTime!, $to: DateTime!) {
+  user(login: $login) {
+    contributionsCollection(from: $from, to: $to) {
+      totalCommitContributions
+      contributionCalendar {
+        weeks { contributionDays { date contributionCount } }
       }
     }
   }
@@ -82,6 +103,48 @@ def fetch_all_repos():
         repos.append(repo)
 
     return repos
+
+
+def fetch_contribution_stats():
+    created_at = graphql(CREATED_AT_QUERY, {"login": USERNAME})["user"]["createdAt"]
+    start_year = int(created_at[:4])
+    current_year = datetime.now(timezone.utc).year
+    now = datetime.now(timezone.utc)
+
+    total_commits = 0
+    days = {}
+    for year in range(start_year, current_year + 1):
+        frm = f"{year}-01-01T00:00:00Z"
+        to_dt = min(datetime(year + 1, 1, 1, tzinfo=timezone.utc), now)
+        to = to_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        collection = graphql(CONTRIBUTIONS_QUERY, {"login": USERNAME, "from": frm, "to": to})["user"][
+            "contributionsCollection"
+        ]
+        total_commits += collection["totalCommitContributions"]
+        for week in collection["contributionCalendar"]["weeks"]:
+            for day in week["contributionDays"]:
+                days[day["date"]] = day["contributionCount"]
+
+    sorted_days = sorted(days.items())
+
+    longest_streak = 0
+    running = 0
+    for _, count in sorted_days:
+        if count > 0:
+            running += 1
+            longest_streak = max(longest_streak, running)
+        else:
+            running = 0
+
+    idx = len(sorted_days) - 1
+    if idx >= 0 and sorted_days[idx][1] == 0:
+        idx -= 1  # today isn't over yet; don't let it break the streak
+    current_streak = 0
+    while idx >= 0 and sorted_days[idx][1] > 0:
+        current_streak += 1
+        idx -= 1
+
+    return total_commits, current_streak, longest_streak
 
 
 def build_stats(repos):
@@ -131,8 +194,14 @@ def render_svg(top_langs, lang_color, total_bytes):
 '''
 
 
-def render_markdown(total_stars):
-    return f"**Total Stars:** {total_stars}\n\n**Top Languages:**\n\n![Top Languages]({SVG_PATH})"
+def render_markdown(total_stars, total_commits, current_streak, longest_streak):
+    return (
+        f"**Total Stars:** {total_stars}\n\n"
+        f"**Total Commits:** {total_commits}\n\n"
+        f"**Current Streak:** {current_streak} days &nbsp;(longest: {longest_streak} days)\n\n"
+        f"**Top Languages:**\n\n"
+        f"![Top Languages]({SVG_PATH})"
+    )
 
 
 def update_readme(content):
@@ -159,11 +228,12 @@ def update_readme(content):
 def main():
     repos = fetch_all_repos()
     total_stars, top_langs, lang_color, total_bytes = build_stats(repos)
+    total_commits, current_streak, longest_streak = fetch_contribution_stats()
 
     with open(SVG_PATH, "w", encoding="utf-8") as f:
         f.write(render_svg(top_langs, lang_color, total_bytes))
 
-    update_readme(render_markdown(total_stars))
+    update_readme(render_markdown(total_stars, total_commits, current_streak, longest_streak))
 
 
 if __name__ == "__main__":
