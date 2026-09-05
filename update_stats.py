@@ -7,6 +7,7 @@ import requests
 USERNAME = os.environ["GH_USERNAME"]
 TOKEN = os.environ["GH_TOKEN"]
 README_PATH = os.environ.get("README_PATH", "README.md")
+SVG_PATH = os.environ.get("SVG_PATH", "top-langs.svg")
 TOP_N = int(os.environ.get("TOP_N_LANGS", "6"))
 
 # Repos owned by other orgs where USERNAME is the primary developer but which
@@ -14,6 +15,13 @@ TOP_N = int(os.environ.get("TOP_N_LANGS", "6"))
 EXTRA_REPOS = [
     r for r in os.environ.get("EXTRA_REPOS", "").split(",") if r.strip()
 ]
+
+# Repos to skip when aggregating languages (still counted for stars) because
+# they vendor large third-party codebases that would otherwise dominate the
+# byte counts. Bare repo names, matched against any owner.
+EXCLUDE_LANG_REPOS = {
+    r.strip() for r in os.environ.get("EXCLUDE_LANG_REPOS", "").split(",") if r.strip()
+}
 
 API = "https://api.github.com/graphql"
 HEADERS = {"Authorization": f"bearer {TOKEN}"}
@@ -24,6 +32,7 @@ query($login: String!, $after: String) {
     repositories(first: 100, after: $after, ownerAffiliations: OWNER, isFork: false, privacy: PUBLIC) {
       pageInfo { hasNextPage endCursor }
       nodes {
+        name
         stargazerCount
         languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
           edges { size node { name color } }
@@ -37,6 +46,7 @@ query($login: String!, $after: String) {
 EXTRA_QUERY = """
 query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
+    name
     stargazerCount
     languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
       edges { size node { name color } }
@@ -79,6 +89,8 @@ def build_stats(repos):
     lang_bytes = {}
     lang_color = {}
     for r in repos:
+        if r["name"] in EXCLUDE_LANG_REPOS:
+            continue
         for edge in r["languages"]["edges"]:
             name = edge["node"]["name"]
             lang_bytes[name] = lang_bytes.get(name, 0) + edge["size"]
@@ -88,21 +100,39 @@ def build_stats(repos):
     return total_stars, top_langs, lang_color, total_bytes
 
 
-def render_bar(pct, width=20):
-    filled = round(width * pct / 100)
-    return "█" * filled + "░" * (width - filled)
+ROW_HEIGHT = 34
+CHART_WIDTH = 480
+PADDING = 14
+BAR_HEIGHT = 8
+TRACK_COLOR = "#6e768133"
+TEXT_COLOR = "#6e7681"
 
 
-def render_markdown(total_stars, top_langs, lang_color, total_bytes):
-    lines = []
-    lines.append(f"**Total Stars:** {total_stars} ⭐\n")
-    lines.append("**Top Languages:**\n")
-    lines.append("```text")
-    for name, size in top_langs:
+def render_svg(top_langs, lang_color, total_bytes):
+    height = PADDING * 2 + len(top_langs) * ROW_HEIGHT
+    bar_max_width = CHART_WIDTH - PADDING * 2
+
+    rows = []
+    for i, (name, size) in enumerate(top_langs):
         pct = 100 * size / total_bytes
-        lines.append(f"{name:<15} {render_bar(pct)} {pct:5.1f}%")
-    lines.append("```")
-    return "\n".join(lines)
+        bar_width = bar_max_width * pct / 100
+        text_y = PADDING + i * ROW_HEIGHT + 12
+        bar_y = PADDING + i * ROW_HEIGHT + 18
+        color = lang_color.get(name, "#8f8f8f")
+        rows.append(f'''
+    <circle cx="{PADDING + 4}" cy="{text_y - 4}" r="4" fill="{color}" />
+    <text x="{PADDING + 14}" y="{text_y}" font-size="13" fill="{TEXT_COLOR}">{name}</text>
+    <text x="{CHART_WIDTH - PADDING}" y="{text_y}" font-size="12" fill="{TEXT_COLOR}" text-anchor="end">{pct:.1f}%</text>
+    <rect x="{PADDING}" y="{bar_y}" width="{bar_max_width}" height="{BAR_HEIGHT}" rx="4" fill="{TRACK_COLOR}" />
+    <rect x="{PADDING}" y="{bar_y}" width="{bar_width:.1f}" height="{BAR_HEIGHT}" rx="4" fill="{color}" />''')
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{CHART_WIDTH}" height="{height}" viewBox="0 0 {CHART_WIDTH} {height}" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif">{"".join(rows)}
+</svg>
+'''
+
+
+def render_markdown(total_stars):
+    return f"**Total Stars:** {total_stars}\n\n**Top Languages:**\n\n![Top Languages]({SVG_PATH})"
 
 
 def update_readme(content):
@@ -129,8 +159,11 @@ def update_readme(content):
 def main():
     repos = fetch_all_repos()
     total_stars, top_langs, lang_color, total_bytes = build_stats(repos)
-    content = render_markdown(total_stars, top_langs, lang_color, total_bytes)
-    update_readme(content)
+
+    with open(SVG_PATH, "w", encoding="utf-8") as f:
+        f.write(render_svg(top_langs, lang_color, total_bytes))
+
+    update_readme(render_markdown(total_stars))
 
 
 if __name__ == "__main__":
