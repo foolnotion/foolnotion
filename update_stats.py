@@ -196,9 +196,9 @@ def render_svg(top_langs, lang_color, total_bytes):
 
 def render_markdown(total_stars, total_commits, current_streak, longest_streak):
     return (
-        f"**Total Stars:** {total_stars}\n\n"
-        f"**Total Commits:** {total_commits}\n\n"
-        f"**Current Streak:** {current_streak} days &nbsp;(longest: {longest_streak} days)\n\n"
+        "| Total Stars | Total Commits | Current Streak | Longest Streak |\n"
+        "|:---:|:---:|:---:|:---:|\n"
+        f"| {total_stars} | {total_commits} | {current_streak} days | {longest_streak} days |\n\n"
         f"**Top Languages:**\n\n"
         f"![Top Languages]({SVG_PATH})"
     )
