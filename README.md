@@ -1,14 +1,7 @@
 <!--START_SECTION:stats-->
-**Total Stars:** 373 ⭐
+**Total Stars:** 373
 
 **Top Languages:**
 
-```text
-C++             ███████████████░░░░░  76.0%
-C               ██░░░░░░░░░░░░░░░░░░  10.7%
-Tcl             ██░░░░░░░░░░░░░░░░░░   8.1%
-HTML            █░░░░░░░░░░░░░░░░░░░   2.5%
-Makefile        ░░░░░░░░░░░░░░░░░░░░   0.9%
-CMake           ░░░░░░░░░░░░░░░░░░░░   0.4%
-```
+![Top Languages](top-langs.svg)
 <!--END_SECTION:stats-->
