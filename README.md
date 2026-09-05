@@ -1,5 +1,3 @@
-### Hi, I'm foolnotion 👋
-
 <!--START_SECTION:stats-->
 **Total Stars:** 49 ⭐
 
