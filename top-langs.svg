@@ -3,7 +3,7 @@
     <text x="28" y="26" font-size="13" fill="#6e7681">C++</text>
     <text x="466" y="26" font-size="12" fill="#6e7681" text-anchor="end">78.4%</text>
     <rect x="14" y="32" width="452" height="8" rx="4" fill="#6e768133" />
-    <rect x="14" y="32" width="354.5" height="8" rx="4" fill="#f34b7d" />
+    <rect x="14" y="32" width="354.4" height="8" rx="4" fill="#f34b7d" />
     <circle cx="18" cy="56" r="4" fill="#DA3434" />
     <text x="28" y="60" font-size="13" fill="#6e7681">CMake</text>
     <text x="466" y="60" font-size="12" fill="#6e7681" text-anchor="end">4.8%</text>
@@ -11,9 +11,9 @@
     <rect x="14" y="66" width="21.8" height="8" rx="4" fill="#DA3434" />
     <circle cx="18" cy="90" r="4" fill="#3572A5" />
     <text x="28" y="94" font-size="13" fill="#6e7681">Python</text>
-    <text x="466" y="94" font-size="12" fill="#6e7681" text-anchor="end">4.2%</text>
+    <text x="466" y="94" font-size="12" fill="#6e7681" text-anchor="end">4.3%</text>
     <rect x="14" y="100" width="452" height="8" rx="4" fill="#6e768133" />
-    <rect x="14" y="100" width="19.1" height="8" rx="4" fill="#3572A5" />
+    <rect x="14" y="100" width="19.2" height="8" rx="4" fill="#3572A5" />
     <circle cx="18" cy="124" r="4" fill="#7355dd" />
     <text x="28" y="128" font-size="13" fill="#6e7681">C#</text>
     <text x="466" y="128" font-size="12" fill="#6e7681" text-anchor="end">3.1%</text>
