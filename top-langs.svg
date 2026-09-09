@@ -3,7 +3,7 @@
     <text x="28" y="26" font-size="13" fill="#6e7681">C++</text>
     <text x="466" y="26" font-size="12" fill="#6e7681" text-anchor="end">73.9%</text>
     <rect x="14" y="32" width="452" height="8" rx="4" fill="#6e768133" />
-    <rect x="14" y="32" width="334.1" height="8" rx="4" fill="#f34b7d" />
+    <rect x="14" y="32" width="333.9" height="8" rx="4" fill="#f34b7d" />
     <circle cx="18" cy="56" r="4" fill="#DA3434" />
     <text x="28" y="60" font-size="13" fill="#6e7681">CMake</text>
     <text x="466" y="60" font-size="12" fill="#6e7681" text-anchor="end">4.5%</text>
