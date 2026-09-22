@@ -13,7 +13,7 @@
     <text x="28" y="94" font-size="13" fill="#6e7681">Python</text>
     <text x="466" y="94" font-size="12" fill="#6e7681" text-anchor="end">4.2%</text>
     <rect x="14" y="100" width="452" height="8" rx="4" fill="#6e768133" />
-    <rect x="14" y="100" width="19.2" height="8" rx="4" fill="#3572A5" />
+    <rect x="14" y="100" width="19.1" height="8" rx="4" fill="#3572A5" />
     <circle cx="18" cy="124" r="4" fill="#DA5B0B" />
     <text x="28" y="128" font-size="13" fill="#6e7681">Jupyter Notebook</text>
     <text x="466" y="128" font-size="12" fill="#6e7681" text-anchor="end">3.3%</text>
