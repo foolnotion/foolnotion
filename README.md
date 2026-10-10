@@ -1,7 +1,7 @@
 <!--START_SECTION:stats-->
 | Total Stars | Total Commits | Current Streak | Longest Streak |
 |:---:|:---:|:---:|:---:|
-| 377 | 6967 | 27 days | 59 days |
+| 377 | 6967 | 1 days | 59 days |
 
 **Top Languages:**
 
